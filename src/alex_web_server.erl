@@ -1,26 +1,44 @@
 -module(alex_web_server).
--export([main/0, start/1]).
-
-start(Port) ->
-  spawn(fun () -> {ok, Sock} = gen_tcp:listen(Port, [{active, false}]),
-    loop(Sock) end).
-
-loop(Sock) ->
-  {ok, Conn} = gen_tcp:accept(Sock),
-  Handler = spawn(fun () -> handle(Conn) end),
-  gen_tcp:controlling_process(Conn, Handler),
-  loop(Sock).
-
-handle(Conn) ->
-  gen_tcp:send(Conn, response("Hello World")),
-  gen_tcp:close(Conn).
-
-response(Str) ->
-  B = iolist_to_binary(Str),
-  iolist_to_binary(
-    io_lib:fwrite(
-      "HTTP/1.0 200 OK\nContent-Type: text/html\nContent-Length: ~p\n\n~s",
-      [size(B), B])).
+-compile(export_all).
 
 main() ->
   start(8080).
+
+start(Port) ->
+  io:format("server started.~n"),
+  {ok, ServerSocket} = gen_tcp:listen(Port, [binary, {packet, 0},
+    {reuseaddr, true}, {active, true}]),
+  server_loop(ServerSocket).
+
+server_loop(ServerSocket) ->
+  {ok, Socket} = gen_tcp:accept(ServerSocket),
+
+  Pid = spawn(fun() -> handle_client(Socket) end),
+  inet:setopts(Socket, [{packet, 0}, binary,
+    {nodelay, true}, {active, true}]),
+  gen_tcp:controlling_process(Socket, Pid),
+
+  server_loop(ServerSocket).
+
+handle_client(Socket) ->
+  receive
+    {tcp, Socket, Request} ->
+      io:format("received: ~s~n", [Request]),
+
+      gen_tcp:send(Socket, header() ++ content()),
+      gen_tcp:close(Socket),
+
+      io:format("closed...~n")
+  end.
+
+header() ->
+  "HTTP/1.0 200 OK\r\n" ++
+    "Cache-Control: private\r\n" ++
+    "Content-Type: text/html\r\n" ++
+    "Connection: Close\r\n\r\n".
+
+content() ->
+%%   {ok, Data} = file:read_file("./index.html"),
+%%   Data.
+  "Hello World".
+
