@@ -24,8 +24,10 @@ handle_client(Socket) ->
   receive
     {tcp, Socket, Request} ->
       io:format("received: ~s~n", [Request]),
-
-      gen_tcp:send(Socket, header() ++ content()),
+      RequestString = binary_to_list(Request),
+      Url = string:substr(RequestString, 1, string:str(RequestString, " HTTP")),
+      io:format("url: ~s~n", [Url]),
+      gen_tcp:send(Socket, header() ++ content(Request)),
       gen_tcp:close(Socket),
 
       io:format("closed...~n")
@@ -37,8 +39,8 @@ header() ->
     "Content-Type: text/html\r\n" ++
     "Connection: Close\r\n\r\n".
 
-content() ->
+content(Request) ->
 %%   {ok, Data} = file:read_file("./index.html"),
 %%   Data.
-  "Hello World".
+  Request.
 
