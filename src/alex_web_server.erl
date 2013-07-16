@@ -43,6 +43,7 @@ content(Request) ->
 %%   {ok, Data} = file:read_file("./index.html"),
 %%   Data.
   Type = string:substr(Request, 1, string:str(Request, " ")),
-  Url = http_uri:decode(string:substr(Request, string:str(Request, " "))),
+  Url = trim_whitespace(http_uri:decode(string:substr(Request, string:str(Request, " ")))),
   ["Request Type: ", Type, ", Url: ", Url].
 
+trim_whitespace(Input) -> re:replace(Input, "\\s+", "", [global]).
