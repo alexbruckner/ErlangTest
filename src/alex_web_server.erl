@@ -27,7 +27,7 @@ handle_client(Socket) ->
       RequestString = binary_to_list(Request),
       Url = string:substr(RequestString, 1, string:str(RequestString, " HTTP")),
       io:format("url: ~s~n", [Url]),
-      gen_tcp:send(Socket, header() ++ content(Request)),
+      gen_tcp:send(Socket, header() ++ content(Url)),
       gen_tcp:close(Socket),
 
       io:format("closed...~n")
@@ -42,5 +42,7 @@ header() ->
 content(Request) ->
 %%   {ok, Data} = file:read_file("./index.html"),
 %%   Data.
-  Request.
+  Type = string:substr(Request, 1, string:str(Request, " ")),
+  Url = string:substr(Request, string:str(Request, " ")),
+  ["Request Type: ", Type, ", Url: ", Url].
 
