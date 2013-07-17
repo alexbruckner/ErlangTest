@@ -42,5 +42,22 @@ content(Request) ->
   ActionString = string:substr(Url, string:str(Url, "?") + 1),
   Action = string:substr(ActionString, 1, string:str(ActionString, "=") - 1),
   KeyValuePairs = string:substr(ActionString, string:str(ActionString, "=") + 1),
-  ["Request Type: ", Type, ", CastOrCall: ", CastOrCall, ", Action: ", Action, ", Params: ", KeyValuePairs].
+  return(list_to_atom(CastOrCall), Action, KeyValuePairs).
+
+
+return(cast, Action, KeyValuePairs) ->
+  io:format("cunt. Action=~p, KeyValueShit=~p", [Action, KeyValuePairs]),
+  {ok, Pid} = alex:start(),
+  alex:cast(Pid, Action, KeyValuePairs),
+  "ok";
+return(call, Action, KeyValuePairs) ->
+  {ok, Pid} = alex:start(),
+  alex:call(Pid, Action, KeyValuePairs);
+return(_, _Action, _KeyValuePairs) ->
+  "fuckyou".
+
+
+
+
+
 
