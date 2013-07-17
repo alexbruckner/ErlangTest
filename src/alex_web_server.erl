@@ -26,29 +26,21 @@ handle_client(Socket) ->
       io:format("received: ~s~n", [Request]),
       RequestString = binary_to_list(Request),
       Url = string:substr(RequestString, 1, string:str(RequestString, " HTTP")),
-      io:format("url: ~s~n", [Url]),
-      gen_tcp:send(Socket, header() ++ content(Url)),
+      gen_tcp:send(Socket,  content(Url)),
       gen_tcp:close(Socket),
 
       io:format("closed...~n")
   end.
 
-header() ->
-  "HTTP/1.0 200 OK\r\n" ++
-    "Cache-Control: private\r\n" ++
-    "Content-Type: text/html\r\n" ++
-    "Connection: Close\r\n\r\n".
-
 content(Request) ->
-%%   ie: http://localhost:8080/sync?test=[{key1, value1}, {key2, "value 2"}]
-%%   should perform action: test - with keyvalue list: [{key1, value1}, {key2, "value 2"}]
-%%   TODO - deal with favicon request
-  Type = string:substr(Request, 1, string:str(Request, " ")),
+%%   ie: Request Type: GET, CastOrCall: cast, Action: test, Params: [{key1, value1}, {key2, "value 2"}]
+%%   should perform sync action: test - with keyvalue list: [{key1, value1}, {key2, "value 2"}]
+%%   TODO - deal with favicon request + deal with missing stuff in general
+  Type = string:substr(Request, 1, string:str(Request, " ") - 1),
   Url = http_uri:decode(string:substr(Request, string:str(Request, " "))),
   CastOrCall = string:substr(Url, 3, 4),
   ActionString = string:substr(Url, string:str(Url, "?") + 1),
   Action = string:substr(ActionString, 1, string:str(ActionString, "=") - 1),
-  ["Request Type: ", Type, ", Url: ", Url, ", CastOrCall: ", CastOrCall, ", Action: ", Action].
-
-trim_whitespace(Input) -> re:replace(Input, "\\s+", "", [global]).
+  KeyValuePairs = string:substr(ActionString, string:str(ActionString, "=") + 1),
+  ["Request Type: ", Type, ", CastOrCall: ", CastOrCall, ", Action: ", Action, ", Params: ", KeyValuePairs].
 
