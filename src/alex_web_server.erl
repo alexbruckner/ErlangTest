@@ -40,10 +40,15 @@ header() ->
     "Connection: Close\r\n\r\n".
 
 content(Request) ->
-%%   {ok, Data} = file:read_file("./index.html"),
-%%   Data.
+%%   ie: http://localhost:8080/sync?test=[{key1, value1}, {key2, "value 2"}]
+%%   should perform action: test - with keyvalue list: [{key1, value1}, {key2, "value 2"}]
+%%   TODO - deal with favicon request
   Type = string:substr(Request, 1, string:str(Request, " ")),
-  Url = trim_whitespace(http_uri:decode(string:substr(Request, string:str(Request, " ")))),
-  ["Request Type: ", Type, ", Url: ", Url].
+  Url = http_uri:decode(string:substr(Request, string:str(Request, " "))),
+  CastOrCall = string:substr(Url, 3, 4),
+  ActionString = string:substr(Url, string:str(Url, "?") + 1),
+  Action = string:substr(ActionString, 1, string:str(ActionString, "=") - 1),
+  ["Request Type: ", Type, ", Url: ", Url, ", CastOrCall: ", CastOrCall, ", Action: ", Action].
 
 trim_whitespace(Input) -> re:replace(Input, "\\s+", "", [global]).
+
