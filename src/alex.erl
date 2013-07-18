@@ -18,14 +18,14 @@ shutdown(Pid) ->
 init([]) -> {ok, []}.
 
 handle_cast({Action, KeyValueList}, _State) when is_list(KeyValueList) ->
-  io:format("Call: Requested action <~p> with values <~p>~n", [Action, KeyValueList]),
+  io:format("Cast: Requested action <~p> with values <~p>~n", [Action, KeyValueList]),
   handle_message(Action, KeyValueList),
   {noreply, []}.
 
 handle_call(terminate, {_From, _Pid}, _State) ->
   {stop, normal, ok, []};
 handle_call({call, Action, KeyValueList}, {_From, _Pid}, _State) ->
-  io:format("Cast: Requested action <~p> with values <~p>~n", [Action, KeyValueList]),
+  io:format("Call: Requested action <~p> with values <~p>~n", [Action, KeyValueList]),
   {reply, handle_message(Action, KeyValueList), []}.
 
 terminate(_Pid, _State) ->

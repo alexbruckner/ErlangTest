@@ -33,28 +33,42 @@ handle_client(Socket) ->
   end.
 
 content(Request) ->
-%%   ie: Request Type: GET, CastOrCall: cast, Action: test, Params: [{key1, value1}, {key2, "value 2"}]
+%%   http://localhost:8080/cast?test=muh:value1,%20key2%20:%20%22value%202%22
+%%   ie: Request Type: GET, CastOrCall: cast, Action: test, Params: key1:value1, key2 : \"value 2\"
 %%   should perform sync action: test - with keyvalue list: [{key1, value1}, {key2, "value 2"}]
 %%   TODO - deal with favicon request + deal with missing stuff in general
-  Type = string:substr(Request, 1, string:str(Request, " ") - 1),
   Url = http_uri:decode(string:substr(Request, string:str(Request, " "))),
   CastOrCall = string:substr(Url, 3, 4),
   ActionString = string:substr(Url, string:str(Url, "?") + 1),
   Action = string:substr(ActionString, 1, string:str(ActionString, "=") - 1),
   KeyValuePairs = string:substr(ActionString, string:str(ActionString, "=") + 1),
-  return(list_to_atom(CastOrCall), Action, KeyValuePairs).
+  return(list_to_atom(CastOrCall), list_to_atom(Action), string:strip(KeyValuePairs)).
 
 
+%% example: http://localhost:8080/cast?test=muh:value1,%20key2%20:%20%22value%202%22
 return(cast, Action, KeyValuePairs) ->
-  io:format("cunt. Action=~p, KeyValueShit=~p", [Action, KeyValuePairs]),
+  KeyValueList = tokenize(KeyValuePairs),
+  io:format("Cast: Action=~p, KeyValuePairs=~p~n", [Action, KeyValueList]),
   {ok, Pid} = alex:start(),
-  alex:cast(Pid, Action, KeyValuePairs),
+  alex:cast(Pid, Action, KeyValueList),
   "ok";
+%% example: http://localhost:8080/call?sync=muh:value1,%20key2%20:%20%22value%202%22
 return(call, Action, KeyValuePairs) ->
+  KeyValueList = tokenize(KeyValuePairs),
+  io:format("Call: Action=~p, KeyValuePairs=~p~n", [Action, KeyValueList]),
   {ok, Pid} = alex:start(),
-  alex:call(Pid, Action, KeyValuePairs);
+  alex:call(Pid, Action, KeyValueList);
 return(_, _Action, _KeyValuePairs) ->
-  "fuckyou".
+  "context must be <cast> or <call>".
+
+tokenize(String) ->
+  Tokens = string:tokens(String, ","),
+  [ to_tuple(X) || X <- Tokens].
+
+to_tuple(X) ->
+  K = list_to_atom(string:strip(string:substr(X, 1, string:str(X, ":") - 1))),
+  V = string:strip(string:substr(X, string:str(X, ":") + 1)),
+  {K,V}.
 
 
 
