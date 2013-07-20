@@ -2,8 +2,8 @@
 -compile(export_all).
 -behavior(gen_server).
 
-start_link() -> gen_server:start_link(?MODULE, [], []).
-start() -> gen_server:start(?MODULE, [], []).
+start_link(Handler) when is_atom(Handler) -> gen_server:start_link(?MODULE, [Handler], []).
+start(Handler) when is_atom(Handler) -> gen_server:start(?MODULE, [Handler], []).
 
 % ie: cast(Pid, test, [{key1, value1}, {key2, value2}])
 cast(Pid, Action, KeyValueList) when is_list(KeyValueList) ->
@@ -15,30 +15,24 @@ call(Pid, Action, KeyValueList) ->
 shutdown(Pid) ->
   gen_server:call(Pid, terminate).
 
-init([]) -> {ok, []}.
+init([Handler]) ->
+  io:format("Handler: ~p~n", [Handler]),
+  {ok, Handler}.
 
-handle_cast({Action, KeyValueList}, _State) when is_list(KeyValueList) ->
+handle_cast({Action, KeyValueList}, Handler) when is_list(KeyValueList) ->
   io:format("Cast: Requested action <~p> with values <~p>~n", [Action, KeyValueList]),
-  handle_message(Action, KeyValueList),
-  {noreply, []}.
+  erlang:apply(Handler, handle_message, [Action, KeyValueList]),
+  {noreply, Handler}.
 
-handle_call(terminate, {_From, _Pid}, _State) ->
+handle_call(terminate, {_From, _Pid}, _Handler) ->
   {stop, normal, ok, []};
-handle_call({call, Action, KeyValueList}, {_From, _Pid}, _State) ->
+handle_call({call, Action, KeyValueList}, {_From, _Pid}, Handler) ->
   io:format("Call: Requested action <~p> with values <~p>~n", [Action, KeyValueList]),
-  {reply, handle_message(Action, KeyValueList), []}.
+  {reply, erlang:apply(Handler, handle_message, [Action, KeyValueList]), Handler}.
 
-terminate(_Pid, _State) ->
+terminate(_Pid, Handler) ->
   io:format("Terminated.~n"),
-  {ok, []}.
-
-handle_message(test, KeyValueList) ->
-  io:format("Handling action <test> with values <~p>~n", [KeyValueList]),
-  io:format("found value: <~p> for key <muh>~n", [get_value(muh, KeyValueList)]);
-handle_message(sync, KeyValueList) ->
-  get_value(muh, KeyValueList);
-handle_message(RequestType, KeyValueList) ->
-  io:format("Undefined action <~p> with values <~p>~n", [RequestType, KeyValueList]).
+  {ok, Handler}.
 
 get_value(Key, KeyValueList) ->
   get_value(lists:keyfind(Key, 1, KeyValueList)).
