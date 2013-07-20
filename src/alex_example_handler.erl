@@ -9,5 +9,6 @@ handle_message(test, KeyValueList) ->
 handle_message(sync, KeyValueList) ->
   alex:get_value(muh, KeyValueList);
 handle_message(RequestType, KeyValueList) ->
-  io:format("Undefined action <~p> with values <~p>~n", [RequestType, KeyValueList]).
+  io:format("Undefined action <~p> with values <~p>~n", [RequestType, KeyValueList]),
+  "Undefined action <" ++ atom_to_list(RequestType) ++ "> with values <" ++ io_lib:format("~p", [KeyValueList]) ++ ">".
 

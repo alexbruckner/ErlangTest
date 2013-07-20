@@ -39,7 +39,7 @@ get_value(Key, KeyValueList) ->
 
 get_value(KeyValue) when is_tuple(KeyValue)->
   element(2, KeyValue);
-get_value(_) -> not_found.
+get_value(_) -> "not_found".
 
 
 
