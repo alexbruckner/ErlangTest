@@ -76,7 +76,7 @@ auth_test_() ->
 
 %%% Setups/teardowns
 find_unique_name() ->
-  application:start(ppool),
+  ppool:start_link(),
   Name = list_to_atom(lists:flatten(io_lib:format("~p",[now()]))),
   ?assertEqual(undefined, whereis(Name)),
   Name.
